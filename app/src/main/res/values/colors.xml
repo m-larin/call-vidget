@@ -1,0 +1,6 @@
+<resources>
+    <color name="primary">#2E7D32</color>
+    <color name="launcher_bg">#2E7D32</color>
+    <color name="widget_bg">#CC1B1B1B</color>
+    <color name="widget_button">#2E7D32</color>
+</resources>

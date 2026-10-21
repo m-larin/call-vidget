@@ -1,0 +1,23 @@
+<resources>
+    <string name="app_name">Быстрый звонок</string>
+    <string name="widget_description">Кнопки быстрого звонка через Bluetooth</string>
+    <string name="widget_empty">Нет кнопок.\nНажмите, чтобы настроить</string>
+    <string name="require_bt">Звонить только при подключённом Bluetooth</string>
+    <string name="require_bt_hint">Если устройство Bluetooth (гарнитура, автомобиль) подключено, звук звонка идёт через него.</string>
+    <string name="list_empty">Кнопок пока нет. Нажмите «+», чтобы добавить.</string>
+    <string name="add_button">Добавить кнопку</string>
+    <string name="edit_button">Изменить кнопку</string>
+    <string name="name">Имя кнопки</string>
+    <string name="number">Номер телефона</string>
+    <string name="pick_contact">Выбрать из контактов</string>
+    <string name="save">Сохранить</string>
+    <string name="cancel">Отмена</string>
+    <string name="delete">Удалить</string>
+    <string name="move_up">Вверх</string>
+    <string name="move_down">Вниз</string>
+    <string name="error_name">Введите имя</string>
+    <string name="error_number">Введите номер</string>
+    <string name="bt_not_connected">Bluetooth-устройство не подключено</string>
+    <string name="call_permission_denied">Нет разрешения на звонки</string>
+    <string name="calling">Звоним: %1$s</string>
+</resources>
