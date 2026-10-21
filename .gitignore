@@ -26,3 +26,6 @@ Thumbs.db
 
 # Claude Code local settings
 .claude/settings.local.json
+
+# Release signing (keys and passwords)
+keystore.properties

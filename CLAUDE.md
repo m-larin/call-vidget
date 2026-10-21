@@ -13,6 +13,11 @@ Android-приложение «Быстрый звонок» (`com.callwidget`):
 - APK: `app/build/outputs/apk/debug/app-debug.apk`; adb: `D:\Android\sdk\platform-tools\adb.exe`.
 - На этой машине HTTPS перехватывается (PKIX-ошибки в Java). Лечится через `trustStoreType=Windows-ROOT`:
   для клиента это `GRADLE_OPTS` в `build.bat`, для демона `D:\Android\gradle-home\gradle.properties`.
+- Релиз: `build.bat assembleRelease` → `app/build/outputs/apk/release/app-release.apk` (R8 + shrinkResources).
+  Подпись берётся из `keystore.properties` в корне проекта (gitignored); ключ и копия этого файла
+  лежат в `D:\Android\keys\`. Никогда не коммитьте их и не выводите пароли в чат.
+  Проверка подписи: `apksigner.bat verify --print-certs` (из Git Bash, с JAVA_HOME=JDK 17).
+- `cmd /c` из PowerShell не находит `build.bat` по относительному пути, указывайте полный.
 - `local.properties` машинно-зависим и в git не входит (`sdk.dir=D\:\\Android\\sdk`).
 - `.bat` файлы пишите в ASCII с CRLF: cmd ломается на UTF-8 кириллице и LF.
 

@@ -65,6 +65,30 @@ echo "sdk.dir=$HOME/Android/Sdk" > local.properties
 ./gradlew assembleDebug
 ```
 
+## Релизная сборка
+
+Релиз подписывается ключом, параметры которого лежат в `keystore.properties` в корне проекта
+(файл в git не попадает):
+
+```properties
+storeFile=D\:/Android/keys/callwidget-release.jks
+storePassword=...
+keyAlias=callwidget
+keyPassword=...
+```
+
+Сборка: `build.bat assembleRelease` (или `./gradlew assembleRelease`).
+Результат: `app\build\outputs\apk\release\app-release.apk` (R8 и сжатие ресурсов включены).
+Без `keystore.properties` получится неподписанный APK, установить его нельзя.
+
+> Ключ (`.jks`) и пароли храните в резервной копии. Без них нельзя выпустить обновление,
+> которое установится поверх уже установленного приложения.
+
+Создать новый ключ:
+```bat
+D:\Android\jdk17\bin\keytool.exe -genkeypair -keystore D:\Android\keys\callwidget-release.jks -storetype PKCS12 -alias callwidget -keyalg RSA -keysize 2048 -validity 10000
+```
+
 ## Установка на телефон
 
 - Скопируйте APK на телефон и откройте его (разрешите установку из неизвестных источников), или
