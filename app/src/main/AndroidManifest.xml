@@ -21,9 +21,10 @@
             </intent-filter>
         </activity>
 
-        <!-- Невидимая activity: запускается кнопкой виджета и совершает звонок -->
+        <!-- Прозрачная activity: запускается кнопкой виджета, показывает заставку и звонит -->
         <activity
             android:name=".CallActivity"
+            android:configChanges="orientation|screenSize|screenLayout|keyboardHidden"
             android:excludeFromRecents="true"
             android:exported="false"
             android:taskAffinity=""
@@ -39,10 +40,5 @@
                 android:name="android.appwidget.provider"
                 android:resource="@xml/call_widget_info" />
         </receiver>
-
-        <service
-            android:name=".CallWidgetService"
-            android:exported="false"
-            android:permission="android.permission.BIND_REMOTEVIEWS" />
     </application>
 </manifest>

@@ -1,8 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TextView xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/item_button"
-    android:layout_width="match_parent"
-    android:layout_height="52dp"
+    android:layout_width="0dp"
+    android:layout_height="match_parent"
+    android:layout_margin="3dp"
+    android:layout_weight="1"
+    android:autoSizeMaxTextSize="22sp"
+    android:autoSizeMinTextSize="10sp"
+    android:autoSizeTextType="uniform"
     android:background="@drawable/widget_button"
     android:drawableStart="@drawable/ic_phone_white"
     android:drawablePadding="4dp"
@@ -12,5 +17,4 @@
     android:paddingStart="8dp"
     android:paddingEnd="8dp"
     android:textColor="#FFFFFF"
-    android:textSize="14sp"
     android:textStyle="bold" />

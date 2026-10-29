@@ -19,5 +19,5 @@
     <string name="error_number">Введите номер</string>
     <string name="bt_not_connected">Bluetooth-устройство не подключено</string>
     <string name="call_permission_denied">Нет разрешения на звонки</string>
-    <string name="calling">Звоним: %1$s</string>
+    <string name="dialing">Набираем номер…</string>
 </resources>

@@ -26,16 +26,18 @@ Android-приложение «Быстрый звонок» (`com.callwidget`):
 - `ButtonStore`: список `CallButton(name, number)` в SharedPreferences (JSON) + флаг `require_bt`.
   `save()` сам вызывает `CallWidgetProvider.refreshAll()`, так что после изменения данных
   виджет обновлять отдельно не нужно.
-- Виджет устроен как коллекция: `GridView` + `CallWidgetService` (RemoteViewsFactory).
-  Нажатие: mutable `PendingIntent` template на `CallActivity` + fill-in intent с
-  `EXTRA_NUMBER`/`EXTRA_NAME`.
-- `CallActivity`: прозрачная (`Theme.Translucent.NoTitleBar`), проверяет Bluetooth-аудио через
+- Виджет без коллекций: в контейнер `grid` (`widget_call`) `CallWidgetProvider` добавляет строки
+  (`widget_row`) с кнопками (`widget_item`) через `RemoteViews.addView`. Строки и кнопки
+  растягиваются весами, число колонок подбирается по размеру виджета (`onAppWidgetOptionsChanged`).
+  У каждой кнопки свой immutable `PendingIntent` на `CallActivity` (requestCode = позиция).
+- `CallActivity`: прозрачная (`Theme.Translucent.NoTitleBar`). На время набора показывает заставку
+  (`activity_call`) и закрывается в `onStop`, когда её перекрыл экран звонка; повторные нажатия,
+  пока она открыта, игнорируются. Проверяет Bluetooth-аудио через
   `AudioManager.getDevices` (SCO/BLE headset, без BT-разрешений), запрашивает `CALL_PHONE`,
   делает `ACTION_CALL`. Явно направить звук в BT нельзя (это делает Telecom/дефолтный
   дайлер), поэтому реализована только проверка подключения.
 - `MainActivity`: RecyclerView + MaterialAlertDialog. Контакт выбирается через
   `ACTION_PICK` с `Phone.CONTENT_URI` (временный доступ, без READ_CONTACTS).
-- `setRemoteAdapter(int, Intent)` deprecated в API 35, предупреждение подавлено намеренно.
 
 ## Соглашения
 
