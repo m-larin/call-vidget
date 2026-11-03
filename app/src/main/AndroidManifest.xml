@@ -2,6 +2,12 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
     <uses-permission android:name="android.permission.CALL_PHONE" />
+    <uses-permission android:name="android.permission.INTERNET" />
+    <!-- Только для диагностики: выдаётся вручную через adb (pm grant), иначе в logcat видны лишь свои строки -->
+    <uses-permission
+        android:name="android.permission.READ_LOGS"
+        xmlns:tools="http://schemas.android.com/tools"
+        tools:ignore="ProtectedPermissions" />
 
     <uses-feature android:name="android.hardware.telephony" android:required="false" />
 
@@ -10,7 +16,8 @@
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:supportsRtl="true"
-        android:theme="@style/Theme.CallWidget">
+        android:theme="@style/Theme.CallWidget"
+        android:usesCleartextTraffic="true">
 
         <activity
             android:name=".MainActivity"
@@ -21,7 +28,7 @@
             </intent-filter>
         </activity>
 
-        <!-- Прозрачная activity: запускается кнопкой виджета, показывает заставку и звонит -->
+        <!-- Прозрачная activity: запрашивает CALL_PHONE для кнопки-звонка, затем звонит -->
         <activity
             android:name=".CallActivity"
             android:configChanges="orientation|screenSize|screenLayout|keyboardHidden"
@@ -29,6 +36,33 @@
             android:exported="false"
             android:taskAffinity=""
             android:theme="@android:style/Theme.Translucent.NoTitleBar" />
+
+        <!-- Кнопка-запрос: заставка на время REST-запроса, затем OK или ошибка.
+             singleTask: повторные нажатия приходят в onNewIntent, а не открывают вторую заставку -->
+        <activity
+            android:name=".HttpActivity"
+            android:configChanges="orientation|screenSize|screenLayout|keyboardHidden"
+            android:excludeFromRecents="true"
+            android:exported="false"
+            android:launchMode="singleTask"
+            android:taskAffinity=""
+            android:theme="@android:style/Theme.Translucent.NoTitleBar" />
+
+        <!-- Отправка журнала нажатий из меню главного экрана -->
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.logs"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/log_paths" />
+        </provider>
+
+        <!-- Нажатие кнопки виджета: звонит через TelecomManager без запуска activity -->
+        <receiver
+            android:name=".CallReceiver"
+            android:exported="false" />
 
         <receiver
             android:name=".CallWidgetProvider"

@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Заставка на время набора: перекрывает рабочий стол, чтобы было видно, что звонок пошёл -->
+<!-- Заставка кнопки-запроса: ожидание, затем «OK» или текст ошибки. Нажатие закрывает -->
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/http_root"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="#99000000"
@@ -11,42 +12,47 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="center"
-        android:background="@drawable/call_splash_background"
+        android:layout_margin="24dp"
+        android:background="@drawable/splash_background"
         android:gravity="center_horizontal"
         android:minWidth="260dp"
         android:orientation="vertical"
         android:padding="28dp">
 
         <ProgressBar
+            android:id="@+id/http_progress"
             android:layout_width="56dp"
             android:layout_height="56dp"
             android:indeterminate="true"
             android:indeterminateTint="@color/widget_button" />
 
+        <ImageView
+            android:id="@+id/http_icon"
+            android:layout_width="56dp"
+            android:layout_height="56dp"
+            android:importantForAccessibility="no"
+            android:visibility="gone" />
+
         <TextView
+            android:id="@+id/http_title"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
-            android:text="@string/dialing"
+            android:gravity="center"
             android:textColor="#B3FFFFFF"
             android:textSize="14sp" />
 
+        <!-- Длинный ответ сервера обрезается, чтобы карточка не выходила за экран -->
         <TextView
-            android:id="@+id/call_name"
+            android:id="@+id/http_message"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
+            android:ellipsize="end"
             android:gravity="center"
+            android:maxLines="12"
             android:textColor="#FFFFFF"
-            android:textSize="24sp"
+            android:textSize="20sp"
             android:textStyle="bold" />
-
-        <TextView
-            android:id="@+id/call_number"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
-            android:textColor="#B3FFFFFF"
-            android:textSize="16sp" />
     </LinearLayout>
 </FrameLayout>

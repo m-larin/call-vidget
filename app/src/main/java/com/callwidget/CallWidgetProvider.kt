@@ -57,12 +57,21 @@ class CallWidgetProvider : AppWidgetProvider() {
             // Строки и кнопки растягиваются весами, поэтому заполняют виджет при любом размере
             val (width, height) = widgetSizeDp(context, manager.getAppWidgetOptions(widgetId))
             val columns = chooseColumns(buttons.size, width, height)
+            DebugLog.log(
+                "widget $widgetId: ${buttons.size} buttons, ${width}x${height}dp, " +
+                    "clicks -> ${if (Dialer.hasPermission(context)) "receiver" else "activity"}"
+            )
             buttons.withIndex().chunked(columns).forEach { rowButtons ->
                 val row = RemoteViews(context.packageName, R.layout.widget_row)
                 rowButtons.forEach { (index, button) ->
                     val item = RemoteViews(context.packageName, R.layout.widget_item)
                     item.setTextViewText(R.id.item_button, button.name)
-                    item.setOnClickPendingIntent(R.id.item_button, callIntent(context, index, button))
+                    if (button.type == ButtonType.HTTP) {
+                        item.setTextViewCompoundDrawables(R.id.item_button, R.drawable.ic_http_white, 0, 0, 0)
+                        item.setOnClickPendingIntent(R.id.item_button, httpIntent(context, index))
+                    } else {
+                        item.setOnClickPendingIntent(R.id.item_button, callIntent(context, index, button))
+                    }
                     row.addView(R.id.row, item)
                 }
                 views.addView(R.id.grid, row)
@@ -70,16 +79,30 @@ class CallWidgetProvider : AppWidgetProvider() {
             return views
         }
 
+        /**
+         * С разрешением кнопка шлёт broadcast в [CallReceiver], который звонит сразу.
+         * Без разрешения она открывает [CallActivity], чтобы его запросить.
+         */
         private fun callIntent(context: Context, index: Int, button: CallButton): PendingIntent {
-            val intent = Intent(context, CallActivity::class.java)
-                .putExtra(CallActivity.EXTRA_NUMBER, button.number)
-                .putExtra(CallActivity.EXTRA_NAME, button.name)
+            val flags = PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
             // requestCode = позиция кнопки, чтобы у каждой был свой PendingIntent
-            return PendingIntent.getActivity(
-                context, index, intent,
-                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-            )
+            return if (Dialer.hasPermission(context)) {
+                PendingIntent.getBroadcast(context, index, callExtras(Intent(context, CallReceiver::class.java), button), flags)
+            } else {
+                PendingIntent.getActivity(context, index, callExtras(Intent(context, CallActivity::class.java), button), flags)
+            }
         }
+
+        /** Кнопка-запрос открывает заставку [HttpActivity]; параметры она берёт из [ButtonStore] по позиции. */
+        private fun httpIntent(context: Context, index: Int): PendingIntent = PendingIntent.getActivity(
+            context, index,
+            Intent(context, HttpActivity::class.java).putExtra(HttpActivity.EXTRA_INDEX, index),
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
+        private fun callExtras(intent: Intent, button: CallButton): Intent = intent
+            .putExtra(CallActivity.EXTRA_NUMBER, button.number)
+            .putExtra(CallActivity.EXTRA_NAME, button.name)
 
         /** Текущий размер виджета в dp: в портрете лаунчер отдаёт minWidth x maxHeight, в ландшафте наоборот. */
         private fun widgetSizeDp(context: Context, options: Bundle): Pair<Int, Int> {

@@ -16,23 +16,6 @@
             android:layout_height="?attr/actionBarSize"
             app:title="@string/app_name" />
 
-        <com.google.android.material.materialswitch.MaterialSwitch
-            android:id="@+id/require_bt"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:paddingStart="16dp"
-            android:paddingEnd="16dp"
-            android:text="@string/require_bt" />
-
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:paddingStart="16dp"
-            android:paddingEnd="16dp"
-            android:paddingBottom="8dp"
-            android:text="@string/require_bt_hint"
-            android:textAppearance="?attr/textAppearanceBodySmall" />
-
         <FrameLayout
             android:layout_width="match_parent"
             android:layout_height="0dp"

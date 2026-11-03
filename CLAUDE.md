@@ -23,19 +23,34 @@ Android-приложение «Быстрый звонок» (`com.callwidget`):
 
 ## Архитектура
 
-- `ButtonStore`: список `CallButton(name, number)` в SharedPreferences (JSON) + флаг `require_bt`.
+- `ButtonStore`: список `CallButton(name, number, type, http)` в SharedPreferences (JSON).
+  Тип `CALL` (звонок) или `HTTP` (REST-запрос: `HttpRequest` с url, методом, телом, заголовками
+  текстом «Имя: значение» построчно и Basic-аутентификацией). Пароль в JSON только как `passwordEnc`:
+  AES-256/GCM ключом из Android Keystore (`SecretStore`, без deprecated security-crypto). Открытый
+  `password` из старых версий читается и сразу перезаписывается зашифрованным. Ключ не попадает
+  в резервную копию: после восстановления пароль не расшифруется (станет пустым).
+  Записи без `type` (старые версии) читаются как звонки.
   `save()` сам вызывает `CallWidgetProvider.refreshAll()`, так что после изменения данных
   виджет обновлять отдельно не нужно.
 - Виджет без коллекций: в контейнер `grid` (`widget_call`) `CallWidgetProvider` добавляет строки
   (`widget_row`) с кнопками (`widget_item`) через `RemoteViews.addView`. Строки и кнопки
   растягиваются весами, число колонок подбирается по размеру виджета (`onAppWidgetOptionsChanged`).
-  У каждой кнопки свой immutable `PendingIntent` на `CallActivity` (requestCode = позиция).
-- `CallActivity`: прозрачная (`Theme.Translucent.NoTitleBar`). На время набора показывает заставку
-  (`activity_call`) и закрывается в `onStop`, когда её перекрыл экран звонка; повторные нажатия,
-  пока она открыта, игнорируются. Проверяет Bluetooth-аудио через
-  `AudioManager.getDevices` (SCO/BLE headset, без BT-разрешений), запрашивает `CALL_PHONE`,
-  делает `ACTION_CALL`. Явно направить звук в BT нельзя (это делает Telecom/дефолтный
-  дайлер), поэтому реализована только проверка подключения.
+  У каждой кнопки свой immutable `PendingIntent` (requestCode = позиция): при наличии `CALL_PHONE`
+  это broadcast в `CallReceiver`, без него `getActivity` на `CallActivity`. Поэтому виджет
+  перестраивается при смене разрешения (`MainActivity.onResume`, после запроса разрешения).
+- Звонок: `Dialer.call` → `TelecomManager.placeCall`, экран звонка открывает система.
+  Цепочка «виджет → наша activity → `ACTION_CALL`» звонила только со второго нажатия
+  (и с заставкой, и без неё), поэтому от неё отказались.
+- `CallActivity`: прозрачная, нужна только чтобы запросить `CALL_PHONE`; затем звонит и закрывается.
+  Проверок Bluetooth нет: звук в BT направляет система.
+- Кнопка-запрос: `PendingIntent.getActivity` на `HttpActivity` (singleTask, прозрачная) с позицией
+  кнопки; параметры берутся из `ButtonStore`. Запрос выполняет `HttpRunner` (OkHttp, таймаут 30 с).
+  Заставка: ожидание → «OK» (2xx, закрывается через 1,5 с) или текст ошибки (до 15 с, закрывается тапом).
+  HTTP без TLS разрешён (`usesCleartextTraffic`), так как серверы бывают локальными.
+- `DebugLog`: события нажатий/звонков пишутся только в logcat (тег `CallWidget`). Меню главного
+  экрана «Отправить журнал» выгружает `logcat -d` в `cache/logs/logcat.txt` и шлёт через FileProvider
+  (на машине adb нет). Без `READ_LOGS` видны только строки приложения; полный журнал после
+  `adb shell pm grant com.callwidget android.permission.READ_LOGS` (на Android 13+ ещё и запрос согласия).
 - `MainActivity`: RecyclerView + MaterialAlertDialog. Контакт выбирается через
   `ACTION_PICK` с `Phone.CONTENT_URI` (временный доступ, без READ_CONTACTS).
 

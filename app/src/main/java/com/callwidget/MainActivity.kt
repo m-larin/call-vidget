@@ -4,6 +4,10 @@ import android.Manifest
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Bundle
+import android.util.Log
+import android.view.Menu
+import android.view.MenuItem
+import android.widget.Toast
 import android.provider.ContactsContract
 import android.view.LayoutInflater
 import android.view.View
@@ -21,7 +25,11 @@ import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.floatingactionbutton.FloatingActionButton
+import androidx.core.view.isVisible
+import androidx.core.widget.doAfterTextChanged
+import com.google.android.material.button.MaterialButtonToggleGroup
 import com.google.android.material.materialswitch.MaterialSwitch
+import com.google.android.material.textfield.MaterialAutoCompleteTextView
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
 
@@ -49,7 +57,40 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private val requestCallPermission = registerForActivityResult(ActivityResultContracts.RequestPermission()) {}
+    private val requestCallPermission = registerForActivityResult(ActivityResultContracts.RequestPermission()) {
+        CallWidgetProvider.refreshAll(this)
+    }
+
+    override fun onResume() {
+        super.onResume()
+        // Разрешение могли выдать или отозвать в настройках: от него зависит, куда ведут кнопки виджета
+        CallWidgetProvider.refreshAll(this)
+    }
+
+    override fun onCreateOptionsMenu(menu: Menu): Boolean {
+        menuInflater.inflate(R.menu.main, menu)
+        return true
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean = when (item.itemId) {
+        R.id.share_log -> {
+            // logcat читается не мгновенно (особенно с READ_LOGS), поэтому не в главном потоке
+            Thread {
+                val share = try {
+                    DebugLog.dumpAndShare(this)
+                } catch (e: Exception) {
+                    Log.w(DebugLog.TAG, "logcat dump failed", e)
+                    null
+                }
+                runOnUiThread {
+                    if (share != null) startActivity(share)
+                    else Toast.makeText(this, R.string.log_failed, Toast.LENGTH_LONG).show()
+                }
+            }.start()
+            true
+        }
+        else -> super.onOptionsItemSelected(item)
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -62,10 +103,6 @@ class MainActivity : AppCompatActivity() {
             insets
         }
         setSupportActionBar(findViewById<MaterialToolbar>(R.id.toolbar))
-
-        val requireBt = findViewById<MaterialSwitch>(R.id.require_bt)
-        requireBt.isChecked = ButtonStore.requireBluetooth(this)
-        requireBt.setOnCheckedChangeListener { _, checked -> ButtonStore.setRequireBluetooth(this, checked) }
 
         emptyView = findViewById(R.id.empty)
         findViewById<RecyclerView>(R.id.list).apply {
@@ -99,13 +136,54 @@ class MainActivity : AppCompatActivity() {
         val numberLayout = view.findViewById<TextInputLayout>(R.id.number_layout)
         val nameEdit = view.findViewById<TextInputEditText>(R.id.name)
         val numberEdit = view.findViewById<TextInputEditText>(R.id.number)
+        val typeGroup = view.findViewById<MaterialButtonToggleGroup>(R.id.type)
+        val httpSection = view.findViewById<View>(R.id.http_section)
+        val urlLayout = view.findViewById<TextInputLayout>(R.id.url_layout)
+        val urlEdit = view.findViewById<TextInputEditText>(R.id.url)
+        val methodEdit = view.findViewById<MaterialAutoCompleteTextView>(R.id.method)
+        val bodyLayout = view.findViewById<View>(R.id.body_layout)
+        val bodyEdit = view.findViewById<TextInputEditText>(R.id.body)
+        val headersLayout = view.findViewById<TextInputLayout>(R.id.headers_layout)
+        val headersEdit = view.findViewById<TextInputEditText>(R.id.headers)
+        val basicAuth = view.findViewById<MaterialSwitch>(R.id.basic_auth)
+        val authSection = view.findViewById<View>(R.id.auth_section)
+        val userLayout = view.findViewById<TextInputLayout>(R.id.user_layout)
+        val userEdit = view.findViewById<TextInputEditText>(R.id.user)
+        val passwordEdit = view.findViewById<TextInputEditText>(R.id.password)
         dialogName = nameEdit
         dialogNumber = numberEdit
 
+        methodEdit.setSimpleItems(HttpRequest.METHODS)
+        methodEdit.setText(HttpRequest.METHODS.first(), false)
         position?.let {
-            nameEdit.setText(buttons[it].name)
-            numberEdit.setText(buttons[it].number)
+            val button = buttons[it]
+            nameEdit.setText(button.name)
+            numberEdit.setText(button.number)
+            if (button.type == ButtonType.HTTP) typeGroup.check(R.id.type_http)
+            button.http?.let { http ->
+                urlEdit.setText(http.url)
+                methodEdit.setText(http.method, false)
+                bodyEdit.setText(http.body)
+                headersEdit.setText(http.headers)
+                basicAuth.isChecked = http.basicAuth
+                userEdit.setText(http.user)
+                passwordEdit.setText(http.password)
+            }
         }
+
+        // Видимость полей зависит от типа кнопки, метода и Basic-аутентификации
+        fun isHttp() = typeGroup.checkedButtonId == R.id.type_http
+        fun updateVisibility() {
+            numberLayout.isVisible = !isHttp()
+            httpSection.isVisible = isHttp()
+            bodyLayout.isVisible = methodEdit.text.toString() !in HttpRequest.NO_BODY
+            authSection.isVisible = basicAuth.isChecked
+        }
+        typeGroup.addOnButtonCheckedListener { _, _, _ -> updateVisibility() }
+        methodEdit.doAfterTextChanged { updateVisibility() }
+        basicAuth.setOnCheckedChangeListener { _, _ -> updateVisibility() }
+        updateVisibility()
+
         numberLayout.setEndIconOnClickListener {
             pickContact.launch(Intent(Intent.ACTION_PICK, ContactsContract.CommonDataKinds.Phone.CONTENT_URI))
         }
@@ -132,11 +210,36 @@ class MainActivity : AppCompatActivity() {
         dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
             val name = nameEdit.text.toString().trim()
             val number = numberEdit.text.toString().trim()
-            nameLayout.error = if (name.isEmpty()) getString(R.string.error_name) else null
-            numberLayout.error = if (number.isEmpty()) getString(R.string.error_number) else null
-            if (name.isEmpty() || number.isEmpty()) return@setOnClickListener
+            val url = urlEdit.text.toString().trim()
+            val headers = headersEdit.text.toString()
+            val user = userEdit.text.toString()
+            val http = isHttp()
 
-            val button = CallButton(name, number)
+            nameLayout.error = if (name.isEmpty()) getString(R.string.error_name) else null
+            numberLayout.error = if (!http && number.isEmpty()) getString(R.string.error_number) else null
+            urlLayout.error = if (http && !HttpRunner.isValidUrl(url)) getString(R.string.error_url) else null
+            headersLayout.error = if (!http) null else try {
+                HttpRunner.parseHeaders(headers)
+                null
+            } catch (e: IllegalArgumentException) {
+                getString(R.string.error_headers, e.message)
+            }
+            userLayout.error =
+                if (http && basicAuth.isChecked && user.isEmpty()) getString(R.string.error_user) else null
+            val layouts = listOf(nameLayout, numberLayout, urlLayout, headersLayout, userLayout)
+            if (layouts.any { it.error != null }) return@setOnClickListener
+
+            // Параметры запроса сохраняем и для кнопки-звонка, чтобы не терять их при переключении типа
+            val request = HttpRequest(
+                url = url,
+                method = methodEdit.text.toString(),
+                body = bodyEdit.text.toString(),
+                headers = headers.trim(),
+                basicAuth = basicAuth.isChecked,
+                user = user,
+                password = passwordEdit.text.toString(),
+            ).takeIf { http || url.isNotEmpty() }
+            val button = CallButton(name, number, if (http) ButtonType.HTTP else ButtonType.CALL, request)
             if (position == null) buttons.add(button) else buttons[position] = button
             persist()
             dialog.dismiss()
@@ -165,7 +268,10 @@ class MainActivity : AppCompatActivity() {
         override fun onBindViewHolder(holder: Holder, position: Int) {
             val button = buttons[position]
             holder.name.text = button.name
-            holder.number.text = button.number
+            holder.number.text = when (button.type) {
+                ButtonType.CALL -> button.number
+                ButtonType.HTTP -> button.http?.let { "${it.method} ${it.url}" }.orEmpty()
+            }
             holder.up.visibility = if (position > 0) View.VISIBLE else View.INVISIBLE
             holder.down.visibility = if (position < buttons.lastIndex) View.VISIBLE else View.INVISIBLE
             holder.itemView.setOnClickListener { showEditDialog(holder.bindingAdapterPosition) }

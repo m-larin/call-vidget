@@ -2,8 +2,6 @@
     <string name="app_name">Быстрый звонок</string>
     <string name="widget_description">Кнопки быстрого звонка через Bluetooth</string>
     <string name="widget_empty">Нет кнопок.\nНажмите, чтобы настроить</string>
-    <string name="require_bt">Звонить только при подключённом Bluetooth</string>
-    <string name="require_bt_hint">Если устройство Bluetooth (гарнитура, автомобиль) подключено, звук звонка идёт через него.</string>
     <string name="list_empty">Кнопок пока нет. Нажмите «+», чтобы добавить.</string>
     <string name="add_button">Добавить кнопку</string>
     <string name="edit_button">Изменить кнопку</string>
@@ -17,7 +15,31 @@
     <string name="move_down">Вниз</string>
     <string name="error_name">Введите имя</string>
     <string name="error_number">Введите номер</string>
-    <string name="bt_not_connected">Bluetooth-устройство не подключено</string>
     <string name="call_permission_denied">Нет разрешения на звонки</string>
-    <string name="dialing">Набираем номер…</string>
+    <string name="calling">Звоним: %s</string>
+    <string name="share_log">Отправить журнал</string>
+    <string name="log_failed">Не удалось выгрузить журнал</string>
+
+    <string name="type_call">Звонок</string>
+    <string name="type_http">Запрос</string>
+    <string name="http_url">Адрес (https://…)</string>
+    <string name="http_method">Метод</string>
+    <string name="http_body">Тело запроса</string>
+    <string name="http_headers">Заголовки</string>
+    <string name="http_headers_hint">По одному на строку: Имя: значение. Без Content-Type тело отправляется как JSON.</string>
+    <string name="http_basic_auth">Basic-аутентификация</string>
+    <string name="http_user">Логин</string>
+    <string name="http_password">Пароль</string>
+    <string name="error_url">Введите адрес http:// или https://</string>
+    <string name="error_headers">Ошибка в строке %s: нужно «Имя: значение» латиницей</string>
+    <string name="error_user">Введите логин</string>
+
+    <string name="http_sending">Отправка запроса…</string>
+    <string name="http_ok">OK</string>
+    <string name="http_bad_request">Неверные параметры запроса: %s</string>
+    <string name="http_unknown_host">Сервер не найден: %s</string>
+    <string name="http_timeout">Сервер не ответил вовремя</string>
+    <string name="http_connect_failed">Не удалось подключиться: %s</string>
+    <string name="http_ssl_error">Ошибка SSL: %s</string>
+    <string name="http_network_error">Ошибка сети: %s</string>
 </resources>
