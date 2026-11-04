@@ -42,4 +42,5 @@
     <string name="http_connect_failed">Не удалось подключиться: %s</string>
     <string name="http_ssl_error">Ошибка SSL: %s</string>
     <string name="http_network_error">Ошибка сети: %s</string>
+    <string name="http_no_network_access">Системе запрещён доступ приложения к сети (EPERM). Перезагрузите магнитолу; если не поможет, проверьте сетевые разрешения приложения в настройках.</string>
 </resources>

@@ -3,6 +3,8 @@
 
     <uses-permission android:name="android.permission.CALL_PHONE" />
     <uses-permission android:name="android.permission.INTERNET" />
+    <!-- Чтобы найти аккаунт звонков Bluetooth (HFP) и звонить через телефон, а не модем магнитолы -->
+    <uses-permission android:name="android.permission.READ_PHONE_STATE" />
     <!-- Только для диагностики: выдаётся вручную через adb (pm grant), иначе в logcat видны лишь свои строки -->
     <uses-permission
         android:name="android.permission.READ_LOGS"

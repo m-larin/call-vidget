@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.Intent
 import android.media.AudioDeviceInfo
 import android.media.AudioManager
+import android.net.Uri
 import android.os.Build
 import android.os.Process
 import android.os.SystemClock
@@ -51,7 +52,11 @@ object DebugLog {
             android.content.pm.PackageManager.PERMISSION_GRANTED
         file.bufferedWriter().use { out ->
             out.appendLine("app=$version device=${Build.MANUFACTURER} ${Build.MODEL} android=${Build.VERSION.RELEASE} (SDK ${Build.VERSION.SDK_INT})")
-            out.appendLine("defaultDialer=${telecom.defaultDialerPackage} callPermission=${Dialer.hasPermission(context)} readLogs=$readLogs")
+            out.appendLine(
+                "defaultDialer=${telecom.defaultDialerPackage} callPermission=${Dialer.hasPermission(context)} " +
+                    "phoneState=${Dialer.hasPhoneStatePermission(context)} readLogs=$readLogs"
+            )
+            appendCallDiagnostics(context, telecom, out)
             out.appendLine("----")
             val logcat = ProcessBuilder("logcat", "-d", "-v", "threadtime", "-b", "main,system,crash")
                 .redirectErrorStream(true)
@@ -66,6 +71,40 @@ object DebugLog {
             .putExtra(Intent.EXTRA_SUBJECT, FILE_NAME)
             .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
         return Intent.createChooser(send, null)
+    }
+
+    /**
+     * Через что вообще можно позвонить: аккаунты Telecom, кто обрабатывает tel:-интенты
+     * и какие на устройстве есть приложения Bluetooth/телефона (на магнитолах звонит часто своё приложение).
+     */
+    private fun appendCallDiagnostics(context: Context, telecom: TelecomManager, out: Appendable) {
+        runCatching {
+            Dialer.callAccounts(context, telecom).forEach { handle ->
+                val label = runCatching { telecom.getPhoneAccount(handle)?.label }.getOrNull()
+                out.appendLine("account: ${Dialer.describe(handle)} label=$label")
+            }
+            if (Dialer.hasPhoneStatePermission(context)) {
+                out.appendLine("defaultOutgoing=${telecom.getDefaultOutgoingPhoneAccount("tel")?.let { Dialer.describe(it) }}")
+            }
+        }.onFailure { out.appendLine("accounts failed: $it") }
+
+        val pm = context.packageManager
+        val tel = Uri.fromParts("tel", "0", null)
+        for (action in listOf(Intent.ACTION_CALL, Intent.ACTION_DIAL)) {
+            runCatching {
+                pm.queryIntentActivities(Intent(action, tel), 0).forEach {
+                    out.appendLine("resolve $action: ${it.activityInfo.packageName}/${it.activityInfo.name}")
+                }
+            }.onFailure { out.appendLine("resolve $action failed: $it") }
+        }
+        runCatching {
+            val keywords = listOf("bt", "bluetooth", "phone", "dial", "telecom", "call", "hfp")
+            pm.getInstalledPackages(0)
+                .map { it.packageName }
+                .filter { name -> keywords.any { name.contains(it, ignoreCase = true) } }
+                .sorted()
+                .forEach { out.appendLine("package: $it") }
+        }.onFailure { out.appendLine("packages failed: $it") }
     }
 
     private fun audioMode(mode: Int) = when (mode) {

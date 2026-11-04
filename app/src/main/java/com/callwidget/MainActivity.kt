@@ -57,7 +57,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private val requestCallPermission = registerForActivityResult(ActivityResultContracts.RequestPermission()) {
+    private val requestCallPermission = registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) {
         CallWidgetProvider.refreshAll(this)
     }
 
@@ -115,8 +115,11 @@ class MainActivity : AppCompatActivity() {
         updateEmpty()
 
         // Разрешение спрашиваем заранее, чтобы первый звонок с виджета прошёл сразу
-        if (checkSelfPermission(Manifest.permission.CALL_PHONE) != PackageManager.PERMISSION_GRANTED) {
-            requestCallPermission.launch(Manifest.permission.CALL_PHONE)
+        // READ_PHONE_STATE нужен, чтобы найти аккаунт звонков Bluetooth (см. Dialer)
+        val missing = arrayOf(Manifest.permission.CALL_PHONE, Manifest.permission.READ_PHONE_STATE)
+            .filter { checkSelfPermission(it) != PackageManager.PERMISSION_GRANTED }
+        if (missing.isNotEmpty()) {
+            requestCallPermission.launch(missing.toTypedArray())
         }
     }
 

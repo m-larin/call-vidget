@@ -13,6 +13,7 @@ import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
 import java.io.IOException
 import java.net.ConnectException
+import java.net.SocketException
 import java.net.SocketTimeoutException
 import java.net.UnknownHostException
 import java.util.concurrent.TimeUnit
@@ -116,6 +117,8 @@ object HttpRunner {
         is SocketTimeoutException -> context.getString(R.string.http_timeout)
         is ConnectException -> context.getString(R.string.http_connect_failed, e.message ?: "")
         is SSLException -> context.getString(R.string.http_ssl_error, e.message ?: "")
+        is SocketException -> if (e.message?.contains("EPERM") == true) context.getString(R.string.http_no_network_access)
+            else context.getString(R.string.http_network_error, e.message ?: e.javaClass.simpleName)
         else -> context.getString(R.string.http_network_error, e.message ?: e.javaClass.simpleName)
     }
 }

@@ -24,7 +24,7 @@ class CallActivity : Activity() {
         if (Dialer.hasPermission(this)) {
             call()
         } else {
-            requestPermissions(arrayOf(Manifest.permission.CALL_PHONE), REQUEST_CALL)
+            requestPermissions(arrayOf(Manifest.permission.CALL_PHONE, Manifest.permission.READ_PHONE_STATE), REQUEST_CALL)
         }
     }
 
