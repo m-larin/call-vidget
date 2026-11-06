@@ -48,6 +48,11 @@ Android-приложение «Быстрый звонок» (`com.callwidget`):
   видимо, вызов уходил в модем магнитолы. С 1.3 `Dialer` ищет Bluetooth-аккаунт среди
   `callCapablePhoneAccounts` (нужен `READ_PHONE_STATE`) и передаёт его в `EXTRA_PHONE_ACCOUNT_HANDLE`.
   «Отправить журнал» выводит аккаунты, обработчики `ACTION_CALL`/`ACTION_DIAL` и пакеты BT/телефона.
+  Журнал 1.3 показал, что HFP-аккаунта в Telecom нет (есть только `TelephonyConnectionService` модема).
+  Через телефон звонит своё приложение магнитолы `com.syu.bt/.PhoneActivity`. Поэтому с 1.4
+  `Dialer.bluetoothDialer` ищет не-системный обработчик `ACTION_CALL` с «bt/bluetooth/hfp» в имени
+  пакета, и кнопка виджета сразу ведёт `PendingIntent.getActivity` с `ACTION_CALL` в это приложение
+  (через receiver нельзя: запуск activity из фона на Android 10 ограничен). Telecom остаётся запасным путём.
 - `socket failed: EPERM` в HTTP: `INTERNET` добавлен обновлением (1.2), системе нужна перезагрузка.
 - `CallActivity`: прозрачная, нужна только чтобы запросить `CALL_PHONE`; затем звонит и закрывается.
   Проверок Bluetooth нет: звук в BT направляет система.

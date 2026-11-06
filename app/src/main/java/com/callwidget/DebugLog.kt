@@ -87,6 +87,7 @@ object DebugLog {
                 out.appendLine("defaultOutgoing=${telecom.getDefaultOutgoingPhoneAccount("tel")?.let { Dialer.describe(it) }}")
             }
         }.onFailure { out.appendLine("accounts failed: $it") }
+        out.appendLine("btDialer=${Dialer.bluetoothDialer(context)?.flattenToShortString()}")
 
         val pm = context.packageManager
         val tel = Uri.fromParts("tel", "0", null)
